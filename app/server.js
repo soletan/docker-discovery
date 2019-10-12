@@ -12,6 +12,11 @@ const info = {
         nodes: [],
         lastUpdate: null,
     },
+    tasks: {
+        error: null,
+        nodes: [],
+        lastUpdate: null,
+    },
 }
 
 const discover = ( name, store ) => {
@@ -19,6 +24,7 @@ const discover = ( name, store ) => {
         if ( error ) {
             store.error = error;
         } else {
+            store.error = null;
             store.lastUpdate = new Date();
             store.nodes = addresses;
         }
@@ -29,6 +35,7 @@ const discover = ( name, store ) => {
 
 process.nextTick( discover, process.env.HOSTNAME, info.current );
 process.nextTick( discover, "the-host", info.fixed );
+process.nextTick( discover, "tasks.the-host", info.tasks );
 
 
 const server = HTTP.createServer( ( req, res ) => {
