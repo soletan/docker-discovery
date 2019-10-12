@@ -1,0 +1,8 @@
+version: "3.6"
+
+services:
+  the-host:
+    build: .
+    ports: 
+      - "80:80"
+  
