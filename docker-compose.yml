@@ -3,6 +3,6 @@ version: "3.6"
 services:
   the-host:
     build: .
+    image: cepharum/discover-test
     ports: 
       - "80:80"
-  

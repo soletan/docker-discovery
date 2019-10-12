@@ -1,41 +1,44 @@
 const HTTP = require( "http" );
 const DNS = require( "dns" );
 
-const nodes = new Map();
-let resolverError = null;
-let lastUpdate = null;
+const info = {
+    current: {
+        error: null,
+        nodes: [],
+        lastUpdate: null,
+    },
+    fixed: {
+        error: null,
+        nodes: [],
+        lastUpdate: null,
+    },
+}
 
-const discover = () => {
-    DNS.resolve( process.env.HOSTNAME, "A", ( error, addresses ) => {
+const discover = ( name, store ) => {
+    DNS.resolve( name, "A", ( error, addresses ) => {
         if ( error ) {
-            resolverError = error;
+            store.error = error;
         } else {
-            lastUpdate = new Date();
-            nodes.clear();
-            addresses.forEach( ip4 => nodes.set( ip4, true ) );
+            store.lastUpdate = new Date();
+            store.nodes = addresses;
         }
 
-        setTimeout( discover, 60000 );
+        setTimeout( discover, 60000, name, store );
     } );
 };
 
-process.nextTick( discover );
+process.nextTick( discover, process.env.HOSTNAME, info.current );
+process.nextTick( discover, "the-host", info.fixed );
 
 
 const server = HTTP.createServer( ( req, res ) => {
     res.setHeader( "content-type", "application/json" );
-    if ( resolverError ) {
-        res.statusCode = 500;
-        res.end( JSON.stringify( { error: resolverError.message } ) );
-    } else {
-        const result = [];
-        for ( const ipv4 of nodes.keys() ) {
-            result.push( ipv4 );
-        }
 
-        res.statusCode = 200;
-        res.end( JSON.stringify( { nodes: result, lastUpdate } ) );
-    }
+    res.statusCode = 200;
+    res.end( JSON.stringify( { 
+        host: process.env.HOSTNAME,
+        info,
+    } ) );
 } );
 
 server.listen( 80 );
